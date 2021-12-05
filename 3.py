@@ -34,7 +34,10 @@ def power(bitstrings):
 ### Part II ###
 
 # life support rating = oxygen generator rating * co2 scrubber rating
-# Use a trie to efficiently get the subset of bitstrings that match. Trie is binary and ratings are fixed length, which simplifies things. Storing the number of children in each node allows to easily identify when to short-circuit the search and straightforward to determine the most/least common next bit.
+# Use a trie to efficiently get the subset of bitstrings that match.
+# Trie is binary and ratings are fixed length, which simplifies things.
+# Storing the number of children in each node allows to easily identify when to short-circuit
+# the search and straightforward to determine the most/least common next bit.
 
 def prefix_tree(strings):
     leaf_depth = len(strings[0])
@@ -46,12 +49,8 @@ def prefix_tree(strings):
             if not node:
                 node += [[],[],0]
 
-            if s[i] == '0':
-                node[2] += 1
-                node = node[0]
-            else:
-                node[2] += 1
-                node = node[1]
+            node[2] += 1
+            node = node[0] if s[i] == '0' else node[1]
 
         node.append(s)
 
