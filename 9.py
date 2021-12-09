@@ -39,11 +39,6 @@ def expand_basin(height_map, low_point):
     basin = []
     stack = [low_point]
 
-    def valid_neighbour(coord):
-        i,j = coord
-        height = height_map[i][j]
-        return not(coord in basin or height == 9)
-
     while stack:
         point = stack.pop()
         i,j = point
