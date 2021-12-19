@@ -21,7 +21,7 @@ def insertions_for_template(template, rules):
     print(insertions)
     return insertions
 
-def expand_template(template, rules):
+def expand_template_old(template, rules):
     insertions = insertions_for_template(template, rules)
 
     result = []
@@ -36,7 +36,7 @@ def expand_template(template, rules):
 
 def expand_template_n(n, template, rules):
     for _ in range(n):
-        template = expand_template(template, rules)
+        template = expand_template_old(template, rules)
 
     return template
 
@@ -48,53 +48,8 @@ def solve_polymer(n, template, rules):
     return counts.most_common(1)[0][1] - counts.most_common()[-1][1]
 
 
-## Part 2 (first attempt, too slow but better with space)
-
-def expand_pair(pair, depth, rules):
-    l,r = pair
-    c = rules.get(l+r)
-
-    return c,(l,c,depth+1),(c,r,depth+1)
-
-def expand_pairs_n(n, pairs, rules):
-    count_map = defaultdict(int)
-
-    stack = [(pair[0],pair[1],0) for pair in pairs]
-
-    while stack:
-        l,r,depth = stack.pop()
-        if depth == n:
-            continue
-
-        c, l_pair, r_pair = expand_pair((l,r), depth, rules)
-
-        count_map[c] += 1
-        stack.append(l_pair)
-        stack.append(r_pair)
-
-    return count_map
-
-def expand_template_n_new(n, template, rules):
-    pairs = zip(template, template[1:])
-
-    count_map = expand_pairs_n(n, pairs, rules)
-    for c in template:
-        count_map[c] += 1
-
-    return count_map
-
-def solve_polymer_new(n, template, rules):
-    count_map = expand_template_n_new(n, template, rules)
-    most_common = count_map[template[0]]
-    least_common = most_common
-
-    for count in count_map.values():
-        most_common = max(most_common, count)
-        least_common = min(least_common, count)
-
-    return most_common-least_common
-
-## Part 2 (second attempt, avoid explicitly representing pairs)
+## Part 2 (second attempt, avoid explicitly representing pairs
+## this works
 
 def solve_polymer_best(n, template, rules):
     template_pairs = zip(template, template[1:])
@@ -126,4 +81,45 @@ def solve_polymer_best(n, template, rules):
 
     most_common = char_count_map.most_common(1)[0][1]
     least_common = char_count_map.most_common()[-1][1]
+    return most_common - least_common
+
+
+## Part 2 again (try to get the DP-style approach working at last)
+# this also works, but not as fast
+
+def expand_pairs_n(n, pair, rules, cache={}):
+    if n == 0:
+        return Counter()
+
+    l,r = pair
+
+    if (l,r,n) in cache:
+        return cache[(l,r,n)]
+
+    key = l+r
+    c = rules[key]
+
+    count_map = Counter()
+    count_map[c] += 1
+
+    counts_l = expand_pairs_n(n-1, (l+c), rules, cache)
+    counts_r = expand_pairs_n(n-1, (c+r), rules, cache)
+
+    count_map = count_map + counts_l + counts_r
+
+    cache[(l,r,n)] = count_map
+    return count_map
+
+def expand_template(n, template, rules):
+    count_map = Counter(template)
+
+    cache = {}
+    for cm in [expand_pairs_n(n, pair, rules, cache) for pair in zip(template, template[1:])]:
+        count_map += cm
+    return count_map
+
+def solve(n, template, rules):
+    count_map = expand_template(n, template, rules)
+    most_common = count_map.most_common(1)[0][1]
+    least_common = count_map.most_common()[-1][1]
     return most_common - least_common
